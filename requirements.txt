@@ -1,0 +1,8 @@
+requests
+python-dotenv
+beautifulsoup4
+pandas
+jupyterlab
+sqlalchemy
+fastapi
+uvicorn
