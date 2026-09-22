@@ -6,3 +6,4 @@ jupyterlab
 sqlalchemy
 fastapi
 uvicorn
+pydantic
