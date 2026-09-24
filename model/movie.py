@@ -16,10 +16,16 @@ class PopularMoviesResponse(BaseModel):
 
 
 #region Movie Details
+class Genre(BaseModel):
+    id: int
+    name: str
+
 class MoviewDetails(BaseModel):
     id: int
     imdb_id: str
     title: str
+    release_date: str
+    genres: list[Genre]
     origin_country: list
     original_title: str
     budget: int
@@ -27,7 +33,6 @@ class MoviewDetails(BaseModel):
     runtime: int
     vote_average: float
     tagline: str
-
 
 #region Credit
 class Cast(BaseModel):

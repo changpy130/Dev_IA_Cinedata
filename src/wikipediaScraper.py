@@ -97,7 +97,7 @@ class WikipediaScraper:
             return response
 
         except requests.exceptions.Timeout:
-            print("Timeout: TMDB took too long to respond")
+            print("Timeout: Wikipedia took too long to respond")
             return None
 
         except requests.exceptions.HTTPError as e:
