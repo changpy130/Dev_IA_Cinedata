@@ -40,16 +40,22 @@ class Cast(BaseModel):
     name: str
     character: str
     profile_path: Optional[str] = None
-    known_for_department: str
+    known_for_department: Optional[str] = None
 
 class Crew(BaseModel):
     id: int
     name: str
     job: str
     profile_path: Optional[str] = None
-    known_for_department: str
+    known_for_department: Optional[str] = None
 
 class Credit(BaseModel):
     id: int
     cast: list[Cast]
     crew: list[Crew]
+
+class WikiScrap(BaseModel):
+    id: int
+    title: str
+    infobox: Optional[dict] = None
+    plot: Optional[str] = None

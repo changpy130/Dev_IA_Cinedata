@@ -9,7 +9,7 @@ from src.csv_loader import load_links, load_ratings, load_genres
 
 #region SQL requests
 INSERT_LINKS = """
-    INSERT OR IGNORE INTO links (movielens_id, tmdb_id, imdb_id) VALUES (?, ?, ?)
+    INSERT OR IGNORE INTO links (movielens_id, imdb_id, tmdb_id) VALUES (?, ?, ?)
 """
 
 INSERT_RATINGS = """
