@@ -11,7 +11,7 @@ from db.importers.movie_details_importer import MovieDetailsImporter
 from db.importers.info_importer import InfoImporter
 from db.importers.credit_importer import CreditImporter
 from db.importers.plot_importer import PlotImporter
-from db.load_db import DatabaseManager
+from infrastructure.load_db import DatabaseManager
 
 importers: list[Importer] = [
     # MovieImporter(),

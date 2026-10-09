@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 
-class Movie(BaseModel):
+class TmdbMovie(BaseModel):
     id: int
     title: str
     release_date: str
@@ -11,7 +11,7 @@ class Movie(BaseModel):
 
 class PopularMoviesResponse(BaseModel):
     page: int
-    results: list[Movie]
+    results: list[TmdbMovie]
     total_pages: int
 
 

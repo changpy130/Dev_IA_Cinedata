@@ -7,8 +7,8 @@ ROOT = Path(__file__).parent.parent.parent
 sys.path.append(str(ROOT))
 
 from src.wikipediaScraper import WikipediaScraper
-from model.movie import WikiScrap
-from db.load_db import DatabaseManager
+from domain.tmdb_movies import WikiScrap
+from infrastructure.load_db import DatabaseManager
 
 
 #region SQL

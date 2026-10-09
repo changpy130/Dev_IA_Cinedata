@@ -11,7 +11,7 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parent.parent
 sys.path.append(str(project_root))
 
-from model.movie import PopularMoviesResponse, MoviewDetails, Credit, Cast, Crew
+from domain.tmdb_movies import PopularMoviesResponse, MoviewDetails, Credit, Cast, Crew
 
 
 class TMDBExtractor(BaseModel):

@@ -6,7 +6,7 @@ from pathlib import Path
 
 sys.path.append(str(Path(__file__).parent.parent))
 
-from model.movie import WikiScrap
+from domain.tmdb_movies import WikiScrap
 
 
 class WikipediaScraper:

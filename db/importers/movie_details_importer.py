@@ -7,7 +7,7 @@ ROOT = Path(__file__).parent.parent.parent
 sys.path.append(str(ROOT))
 
 from src.TMDBExtractor import TMDBExtractor
-from model.movie import MoviewDetails
+from domain.tmdb_movies import MoviewDetails
 
 
 #region SQL

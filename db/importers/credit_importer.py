@@ -7,8 +7,8 @@ ROOT = Path(__file__).parent.parent.parent
 sys.path.append(str(ROOT))
 
 from src.TMDBExtractor import TMDBExtractor
-from db.load_db import DatabaseManager
-from model.movie import Credit, Cast, Crew
+from infrastructure.load_db import DatabaseManager
+from domain.tmdb_movies import Credit, Cast, Crew
 
 #region SQL
 LOAD_ID = """
