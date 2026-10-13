@@ -1,6 +1,7 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import date
 
+#region Response
 class MovieResponse(BaseModel):
     movielens_id: int
     title: str
@@ -23,6 +24,17 @@ class CastMemberResponse(BaseModel):
     name: str
     character: str | None
 
+class CrewMemberResponse(BaseModel):
+    person_id: int
+    name: str
+    job: str | None
+
 class MovieGenreResponse(BaseModel):
     genre_id: int
     genre_name: str
+
+
+#region Request
+class RatingRequest(BaseModel):
+    user_id: int
+    rating: float = Field(ge=0.5, le=5, multiple_of=0.5)

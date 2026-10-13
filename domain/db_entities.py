@@ -28,9 +28,21 @@ class CastMember:
     character: str | None
 
 @dataclass(frozen=True)
+class CrewMember:
+    person_id: int
+    name: str
+    job: str | None
+
+@dataclass(frozen=True)
 class MovieGenre:
     genre_id: int
     genre_name: str
+
+@dataclass(frozen=True)
+class Rating:
+    user_id: int
+    movielens_id: int
+    rating: float
 
 class Genre(str, Enum):
     ACTION = "Action"

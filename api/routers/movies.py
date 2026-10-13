@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Query, status
 import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent))
@@ -6,7 +6,7 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 from domain.db_entities import Genre
 from api.dependencies import get_sqlite_movie_service
 from services.movie_service import MovieService, MovieNotFound, MovieDetailsNotFound
-from api.response_models import MovieResponse, MovieDetailsResponse, CastMemberResponse, MovieGenreResponse
+from api.schema import MovieResponse, MovieDetailsResponse, CastMemberResponse, CrewMemberResponse, MovieGenreResponse, RatingRequest
 
 router = APIRouter(prefix="/movies", tags=['Movies'])
 
@@ -27,11 +27,7 @@ def get_movie(
     movielens_id: int, 
     service: MovieService = Depends(get_sqlite_movie_service)
 ):
-    try:
-        return service.get_movie(movielens_id)
-
-    except MovieNotFound:
-        raise HTTPException(status_code=404, detail="Movie not found.")
+    return service.get_movie(movielens_id)
 
 
 @router.get("/{movielens_id}/details", response_model=MovieDetailsResponse, description='Get details of a movie with a MovieLens ID.')
@@ -39,11 +35,7 @@ def get_details(
     movielens_id: int, 
     service: MovieService = Depends(get_sqlite_movie_service)
 ):
-    try:
-        return service.get_details(movielens_id)
-    
-    except MovieDetailsNotFound:
-        raise HTTPException(status_code=404, detail="No details available.")
+    return service.get_details(movielens_id)
 
 
 @router.get("/{movielens_id}/cast", response_model=list[CastMemberResponse], description='Get cast members of a movie with a MovieLens ID.')
@@ -51,11 +43,15 @@ def get_cast(
     movielens_id: int, 
     service: MovieService = Depends(get_sqlite_movie_service)
 ):
-    try:
-        return service.get_cast(movielens_id)
+    return service.get_cast(movielens_id)
 
-    except MovieNotFound:
-        raise HTTPException(status_code=404, detail="No cast infos available.")
+
+@router.get("/{movielens_id}/crew", response_model=list[CrewMemberResponse], description='Get crew members of a movie with a MovieLens ID.')
+def get_crew(
+    movielens_id: int,
+    service: MovieService = Depends(get_sqlite_movie_service)
+):
+    return service.get_crew(movielens_id)
 
 
 @router.get("/{movielens_id}/genres", response_model=list[MovieGenreResponse], description='Get genre IDs and names of a movie with a MovieLens ID.')
@@ -63,8 +59,21 @@ def get_genres(
     movielens_id: int,
     service: MovieService = Depends(get_sqlite_movie_service)
 ):
-    try:
-        return service.get_genres(movielens_id)
+    return service.get_genres(movielens_id)
 
-    except MovieNotFound:
-        raise HTTPException(status_code=404, detail="No genre infos available.")
+# 204 means success, no content
+@router.put("/{movielens_id}/rating", status_code=status.HTTP_204_NO_CONTENT, description='Rate a movie with a MovieLens ID and an user ID.')
+def upsert_rating(
+    movielens_id: int,
+    request_body: RatingRequest,
+    service: MovieService = Depends(get_sqlite_movie_service)
+) -> None:
+    service.upsert_rating(user_id=request_body.user_id, movielens_id=movielens_id, rating=request_body.rating)
+
+@router.delete("/{movielens_id}/rating/{user_id}", status_code=status.HTTP_204_NO_CONTENT, description='Delete a movie rating with a MovieLens ID and an user ID.')
+def delete_rating(
+    movielens_id: int,
+    user_id: int,
+    service: MovieService = Depends(get_sqlite_movie_service)
+) -> None:
+    service.delete_rating(user_id=user_id, movielens_id=movielens_id)

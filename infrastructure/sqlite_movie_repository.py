@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from domain.db_entities import Movie, MovieDetails, CastMember, MovieGenre
+from domain.db_entities import Movie, MovieDetails, CastMember, CrewMember, MovieGenre, Rating
 
 
 class SqliteMovieRepository:
@@ -73,6 +73,7 @@ class SqliteMovieRepository:
         
         return MovieDetails(**data)
 
+#region Cast, Crew and Genre
     def get_cast(self, movielens_id: int) -> list[CastMember]:
         cursor = self._conn.execute(
             "SELECT p.person_id, p.name, mc.character "
@@ -86,6 +87,19 @@ class SqliteMovieRepository:
         rows = cursor.fetchall()
         return [ CastMember(**row) for row in rows ]
 
+    def get_crew(self, movielens_id: int) -> list[CrewMember]:
+        cursor = self._conn.execute(
+            "SELECT p.person_id, p.name, c.job "
+            "FROM links l "
+            "JOIN crew c ON l.tmdb_id = c.tmdb_id "
+            "JOIN people p ON c.person_id = p.person_id "
+            "WHERE l.movielens_id = ? "
+            "ORDER BY p.name",
+            (movielens_id,)
+        )
+        rows = cursor.fetchall()
+        return [ CrewMember(**row) for row in rows ]
+
     def get_genres(self, movielens_id: int) -> list[MovieGenre]:
         cursor = self._conn.execute(
             "SELECT g.genre_id, g.genre_name FROM links l "
@@ -98,6 +112,22 @@ class SqliteMovieRepository:
         rows = cursor.fetchall()
         return [ MovieGenre(**row) for row in rows ]
 
+#region Rating
+    def upsert_rating(self, rating: Rating) -> None:
+        self._conn.execute(
+            "INSERT INTO ratings (user_id, movielens_id, rating) VALUES (?, ?, ?) "
+            "ON CONFLICT (user_id, movielens_id) DO UPDATE SET rating = excluded.rating",
+            (rating.user_id, rating.movielens_id, rating.rating)
+        )
+        self._conn.commit()
+
+    def delete_rating(self, user_id: int, movielens_id: int) -> bool:
+        cursor = self._conn.execute(
+            "DELETE FROM ratings WHERE user_id = ? AND movielens_id = ?",
+            (user_id, movielens_id)
+        )
+        self._conn.commit()
+        return cursor.rowcount > 0
 
 #region Testing
 if __name__ == "__main__":
