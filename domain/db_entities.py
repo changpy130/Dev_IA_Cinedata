@@ -44,6 +44,23 @@ class Rating:
     movielens_id: int
     rating: float
 
+@dataclass(frozen=True)
+class CoLikeCount:
+    movielens_id: int
+    co_likes: int
+    likes: int  # total users who liked this candidate
+
+@dataclass(frozen=True)
+class SimilarMovie:
+    movielens_id: int
+    score: float
+
+@dataclass(frozen=True)
+class SimilarMovieDetails:
+    details: MovieDetails
+    score: float
+
+    
 class Genre(str, Enum):
     ACTION = "Action"
     ADVENTURE = "Adventure"

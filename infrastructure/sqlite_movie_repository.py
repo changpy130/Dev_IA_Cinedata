@@ -5,7 +5,7 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from domain.db_entities import Movie, MovieDetails, CastMember, CrewMember, MovieGenre, Rating
+from domain.db_entities import Movie, MovieDetails, CastMember, CrewMember, MovieGenre, Rating, CoLikeCount
 
 
 class SqliteMovieRepository:
@@ -128,6 +128,35 @@ class SqliteMovieRepository:
         )
         self._conn.commit()
         return cursor.rowcount > 0
+
+    def count_likes(self, movielens_id: int, min_rating: float = 4.0) -> int:
+        cursor = self._conn.execute(
+            "SELECT COUNT(user_id) FROM ratings "
+            "WHERE movielens_id = ? AND rating >= ?",
+            (movielens_id, min_rating)
+        )
+        row = cursor.fetchone()
+        return row[0]
+
+    def get_co_like_counts(self, movielens_id: int, min_rating: float = 4.0) -> list[CoLikeCount]:
+        cursor = self._conn.execute(
+            "SELECT r2.movielens_id, "
+            "COUNT(r2.user_id) AS co_likes, "
+            "(SELECT COUNT(*) FROM ratings r3 "
+            "WHERE r3.movielens_id = r2.movielens_id "
+            "AND r3.rating >= :min_rating) AS likes "
+            "FROM ratings r1 "
+            "JOIN ratings r2 "
+            "ON r1.user_id = r2.user_id "
+            "AND r1.movielens_id != r2.movielens_id "
+            "WHERE r1.movielens_id = :movielens_id "
+            "AND r1.rating >= :min_rating "
+            "AND r2.rating >= :min_rating "
+            "GROUP BY r2.movielens_id",
+            { "movielens_id": movielens_id, "min_rating": min_rating }
+        )
+        rows = cursor.fetchall()
+        return [ CoLikeCount(**row) for row in rows ]
 
 #region Testing
 if __name__ == "__main__":

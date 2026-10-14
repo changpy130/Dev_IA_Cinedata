@@ -6,7 +6,7 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 from domain.db_entities import Genre
 from api.dependencies import get_sqlite_movie_service
 from services.movie_service import MovieService, MovieNotFound, MovieDetailsNotFound
-from api.schema import MovieResponse, MovieDetailsResponse, CastMemberResponse, CrewMemberResponse, MovieGenreResponse, RatingRequest
+from api.schema import MovieResponse, MovieDetailsResponse, CastMemberResponse, CrewMemberResponse, MovieGenreResponse, RatingRequest, SimilarMovieResponse
 
 router = APIRouter(prefix="/movies", tags=['Movies'])
 
@@ -61,7 +61,20 @@ def get_genres(
 ):
     return service.get_genres(movielens_id)
 
-# 204 means success, no content
+@router.get("/{movielens_id}/similar", response_model=list[SimilarMovieResponse], description='Get a list of similar movies to your targeted movie with a MovieLens ID.')
+def get_similar(
+    movielens_id: int,
+    limit: int = Query(5, ge=1, le=10),
+    min_rating: float = Query(4.0, ge=0.5, le=5.0),
+    service: MovieService = Depends(get_sqlite_movie_service)
+):
+    return service.get_similar_movies_with_details(
+        movielens_id=movielens_id,
+        min_rating=min_rating,
+        limit=limit
+    )
+
+# 204 status: success, no content
 @router.put("/{movielens_id}/rating", status_code=status.HTTP_204_NO_CONTENT, description='Rate a movie with a MovieLens ID and an user ID.')
 def upsert_rating(
     movielens_id: int,

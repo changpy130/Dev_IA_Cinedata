@@ -33,6 +33,10 @@ class MovieGenreResponse(BaseModel):
     genre_id: int
     genre_name: str
 
+class SimilarMovieResponse(BaseModel):
+    details: MovieDetailsResponse
+    score: float
+
 
 #region Request
 class RatingRequest(BaseModel):
