@@ -66,3 +66,10 @@ CREATE TABLE IF NOT EXISTS ratings (
     PRIMARY KEY (user_id, movielens_id),
     FOREIGN KEY (movielens_id) REFERENCES movies(movielens_id)
 );
+
+CREATE TABLE IF NOT EXISTS plot_attempts (
+    movielens_id INTEGER PRIMARY KEY,
+    status TEXT NOT NULL,   -- 'not_found'
+    attempted_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (movielens_id) REFERENCES movies(movielens_id)
+);

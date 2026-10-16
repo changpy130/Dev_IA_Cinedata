@@ -6,3 +6,4 @@ venv/
 *.db
 data/raw/*.csv
 data/raw/*.json
+*.log

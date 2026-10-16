@@ -1,4 +1,6 @@
 import requests
+import re
+from urllib.parse import quote
 from bs4 import BeautifulSoup
 import httpx, asyncio
 import sys
@@ -10,7 +12,7 @@ from domain.tmdb_movies import WikiScrap
 
 
 class WikipediaScraper:
-    def __init__(self, timeout: int = 5, headers: dict = None, max_concurrent: int = 20):
+    def __init__(self, timeout: int = 5, headers: dict = None, max_concurrent: int = 2):
         self.timeout = timeout
         self.headers = headers or {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
@@ -40,26 +42,27 @@ class WikipediaScraper:
             max_concurrent (int, optional): Maximum concurrent APIs. Defaults to 20.
 
         Returns:
-            list: A list of WikiScrap objects.
+            list: A list of tuple (movielens_id, WikiScrap, bool(isFailed))
         """
         semaphore = asyncio.Semaphore(self.max_concurrent)
 
         async def bounded_fetch(client, id, title):
             async with semaphore:
                 try:
-                    results = await self._fetch_scrap_async(id=id, title=title, client=client)
-                    await asyncio.sleep(1)
-                    return results
+                    scrap = await self._fetch_scrap_async(id=id, title=title, client=client)
+                    return id, scrap, False # False -> no need to log in retry
                 
-                except Exception as e:
-                    print(f"Failed for '{title}': {e}")
-                    return None
+                except httpx.HTTPError:
+                    return id, None, True # True -> needs to be retried in the future, ex: from 429 error
 
-        async with httpx.AsyncClient() as client:
+                finally:
+                    await asyncio.sleep(1)
+
+        async with httpx.AsyncClient(follow_redirects=True) as client:
             tasks = [ bounded_fetch(client=client, id=pair[0], title=pair[1]) for pair in id_title_pairs ]
             results = await asyncio.gather(*tasks)
 
-        return [ result for result in results if result is not None ]
+        return results
 
 
     def fetch_plot(self, title):
@@ -103,31 +106,26 @@ class WikipediaScraper:
 
 #region Async
     async def _fetch_scrap_async(self, id, title, client: httpx.AsyncClient):
-        # url = await self._find_url_async(title, client)  # the search title wiki API limits the number of requests, difficult to call in chunk.
+        # 1. Direct URL guess
         url = self._build_url_str(title)
+        soup = await self._get_soup_async(url, client) if url else None
+        plot = self._get_plot(soup)  # already returns None if soup is None
 
-        if not url:
-            return None
-        
-        soup = await self._get_soup_async(url, client)
-
-        if not soup:
-            return None
-        
-        name = self._get_title(soup)
-        infobox = self._get_infobox(soup)
-        plot = self._get_plot(soup)
+        # 2. Fall back to search if the guess missed or was the wrong page
+        if not plot:
+            url = await self._find_url_async(title, client)
+            soup = await self._get_soup_async(url, client) if url else None
+            plot = self._get_plot(soup)
 
         if not plot:
-            return None
+            return None  # permanent miss: safe to log as not_found
         
-        scrap = {
+        return WikiScrap.model_validate({
             'id': id,
-            'title': name,
-            'infobox': infobox,
-            'plot': plot
-        }
-        return WikiScrap.model_validate(scrap)
+            'title': self._get_title(soup),
+            'infobox': self._get_infobox(soup),
+            'plot': plot,
+        })
 
     async def _find_url_async(self, title, client: httpx.AsyncClient):
         search_url = "https://en.wikipedia.org/w/api.php"
@@ -175,9 +173,10 @@ class WikipediaScraper:
     def _build_url_str(self, title):
         if not title:
             return None
+
+        clean_title = self.clean_title(title).replace(" ", "_")
         
-        url = "https://en.wikipedia.org/wiki/" + title.replace(" ", "_")
-        return url
+        return "https://en.wikipedia.org/wiki/" + quote(clean_title, safe="_,()!:*-.~")
 
 
     def _get_title(self, soup: BeautifulSoup):
@@ -268,11 +267,25 @@ class WikipediaScraper:
 
         except httpx.HTTPStatusError as e:
             print(f"HTTP error: {e}")
-            return None
+            if e.response.status_code == 404:
+                return None      # permanent: the importer logs it as not_found
+            raise
 
         except httpx.RequestError as e:
             print(f"Request error: {e}")
             return None
+
+    def clean_title(self, title):
+        title = title.strip()
+
+        # Step 1: remove ALL trailing parenthetical groups
+        title = re.sub(r'(\s*\([^)]*\))+\s*$', '', title)
+
+        # Step 2: swap trailing article to the front
+        title = re.sub(r'^(.*),\s*(The|A|An)$', r'\2 \1', title)
+
+        # Step 3: collapse repeated whitespace
+        return re.sub(r'\s+', ' ', title).strip()
 
 #region Testing
 if __name__ == "__main__":

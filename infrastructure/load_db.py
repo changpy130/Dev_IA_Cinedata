@@ -4,9 +4,7 @@ import sqlite3
 
 class DatabaseManager:
     def __init__(self, db_path: Path | None = None):
-        #TODO: Delete the dev db path
-        self.db_path = db_path or Path(__file__).parent.parent / "data" / "clean" / "movies_dev.db"
-        # self.db_path = db_path or Path(__file__).parent.parent / "data" / "clean" / "movies.db"
+        self.db_path = db_path or Path(__file__).parent.parent / "data" / "clean" / "movies.db"
 
     def load_db(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path, check_same_thread=False)

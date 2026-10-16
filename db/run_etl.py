@@ -1,3 +1,9 @@
+#!/usr/bin/python3
+
+# For cron log
+from datetime import datetime
+print(f"=== ETL started at {datetime.now():%Y-%m-%d %H:%M:%S} ===", flush=True)
+
 import sys
 from pathlib import Path
 import sqlite3
@@ -17,11 +23,11 @@ importers: list[Importer] = [
     # MovieImporter(),
     # MovieDetailsImporter(),
     # InfoImporter(),
-    CreditImporter(
-        cast_num=5, 
-        crew_jobs=['Director', 'Writer', 'Editor', 'Director of Photography', 'Original Music Composer']
-    ),
-    # PlotImporter(timeout=5, max_concurrent=3)
+    # CreditImporter(
+    #     cast_num=5, 
+    #     crew_jobs=['Director', 'Writer', 'Editor', 'Director of Photography', 'Original Music Composer']
+    # ),
+    PlotImporter(timeout=5, max_concurrent=1)
 ]
 
 movie_db_manager = DatabaseManager()
@@ -31,3 +37,5 @@ for importer in importers:
     importer.run(conn=conn)
 
 conn.close()
+
+print(f"=== ETL ended at {datetime.now():%Y-%m-%d %H:%M:%S} ===", flush=True)
