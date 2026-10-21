@@ -20,6 +20,7 @@ class MovieDetails:
     vote_average: float | None
     tagline: str | None
     plot: str | None
+    overview: str | None
 
 @dataclass(frozen=True)
 class CastMember:

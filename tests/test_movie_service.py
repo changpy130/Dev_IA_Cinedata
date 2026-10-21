@@ -3,7 +3,8 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from domain.db_entities import Movie, MovieDetails, SimilarMovie
+from domain.db_entities import Movie, MovieDetails
+from domain.title_search import normalise_query
 from services.movie_service import MovieService, MovieNotFound, RatingNotFound
 from tests.fakes import FakeMovieRepository
 
@@ -66,8 +67,8 @@ def test_get_similar_movies_with_details():
     service, _ = make_service([ 
         Movie(movielens_id=1, title="Toy Story", year=1995)
     ], [
-        MovieDetails(movielens_id=10, title="MD10", year=2000, release_date=None, budget=None, revenue=None, runtime=None, vote_average=None, tagline="HELLLOOOO10", plot=None),
-        MovieDetails(movielens_id=30, title="MD30", year=2011, release_date=None, budget=None, revenue=None, runtime=None, vote_average=None, tagline="HELLLOOOO30", plot=None),
+        MovieDetails(movielens_id=10, title="MD10", year=2000, release_date=None, budget=None, revenue=None, runtime=None, vote_average=None, tagline="HELLLOOOO10", plot=None, overview=""),
+        MovieDetails(movielens_id=30, title="MD30", year=2011, release_date=None, budget=None, revenue=None, runtime=None, vote_average=None, tagline="HELLLOOOO30", plot=None, overview=""),
     ])
     result = service.get_similar_movies_with_details(movielens_id=1, min_co_likes=1)
     # should skip movielens_id=20 404 error from the fake data
@@ -75,3 +76,54 @@ def test_get_similar_movies_with_details():
     assert [ s.details.movielens_id for s in result ] == [30, 10]
 
     assert result[0].score == pytest.approx(8 / 12)
+
+#region Search movies
+def test_search_title_case_sensitivity():
+    service, _ = make_service(
+        movies=[
+            Movie(1, "Toy Story", 1995),
+            Movie(2, "Cat Story", 1995),
+            Movie(3, "Dog Story", 1995)
+        ],
+        details=[]
+    )
+    result = service.search_movies(query="toy", limit=2)
+
+    assert [ movie.title for movie in result ] == ["Toy Story"]
+
+def test_search_title_empty_space():
+    service, _ = make_service(
+        movies=[
+            Movie(1, "Toy Story", 1995),
+            Movie(2, "Cat Story", 1995),
+            Movie(3, "Dog Story", 1995)
+        ],
+        details=[]
+    )
+    result = service.search_movies("   ", limit=5)
+
+    assert result == []
+
+def test_search_respects_limit():
+    service, _ = make_service(
+        movies=[
+            Movie(1, "Toy Story", 1995),
+            Movie(2, "Toy Story 2", 1999),
+            Movie(3, "Toy Story 3", 2010),
+        ],
+        details=[],
+    )
+    result = service.search_movies(query="toy", limit=2)
+
+    assert len(result) == 2
+
+@pytest.mark.parametrize("typed, expected", [
+    ("the matrix", "matrix"),
+    ("The Matrix", "Matrix"),
+    ("a bug's life", "bug's life"),
+    ("theory of everything", "theory of everything"),
+    ("the", "the"),
+    ("  the matrix  ", "matrix"),
+])
+def test_normalise_query(typed, expected):
+    assert normalise_query(typed) == expected

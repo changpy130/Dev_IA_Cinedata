@@ -20,7 +20,7 @@ class Genre(BaseModel):
     id: int
     name: str
 
-class MoviewDetails(BaseModel):
+class MovieDetails(BaseModel):
     id: int
     imdb_id: str
     title: str
@@ -33,6 +33,7 @@ class MoviewDetails(BaseModel):
     runtime: int
     vote_average: float
     tagline: str
+    overview: str | None = None
 
 #region Credit
 class Cast(BaseModel):

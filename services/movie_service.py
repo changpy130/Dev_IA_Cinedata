@@ -2,8 +2,9 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from domain.db_entities import Movie, MovieDetails, CastMember, CrewMember, MovieGenre, Rating, CoLikeCount, SimilarMovie, SimilarMovieDetails
+from domain.db_entities import Movie, MovieDetails, CastMember, CrewMember, MovieGenre, Rating, SimilarMovie, SimilarMovieDetails
 from domain.repositories import MovieRepository
+from domain.title_search import normalise_query
 
 #region Error class
 class NotFoundError(Exception):
@@ -20,6 +21,10 @@ class MovieDetailsNotFound(NotFoundError):
 class RatingNotFound(NotFoundError):
     def __init__(self, user_id: int, movielens_id: int):
         super().__init__(f"Rating by user {user_id} for the movie {movielens_id} not found")
+
+class EmbeddingNotFound(NotFoundError):
+    def __init__(self, movielens_id: int):
+        super().__init__(f"Movie {movielens_id} has no embedding")
 
 
 #region Main service
@@ -114,3 +119,10 @@ class MovieService:
             result.append(SimilarMovieDetails(detail, movie.score))
 
         return result
+
+    def search_movies(self, query: str, limit: int = 5) -> list[Movie]:
+        query = normalise_query(query)
+
+        if not query:
+            return []
+        return self._repo.search_by_title(query, limit)

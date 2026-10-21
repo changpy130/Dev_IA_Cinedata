@@ -40,3 +40,8 @@ class FakeMovieRepository:
             CoLikeCount(movielens_id=20, co_likes=2, likes=1000),  # lowest score
             CoLikeCount(movielens_id=30, co_likes=8, likes=10),  # highest score
         ]
+
+    def search_by_title(self, query: str, limit: int) -> list[Movie]:
+        q = query.lower()
+        matches = [m for m in self._movies.values() if q in m.title.lower()]
+        return matches[:limit]

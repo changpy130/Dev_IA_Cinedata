@@ -17,6 +17,7 @@ class MovieDetailsResponse(BaseModel):
     runtime: int | None
     vote_average: float | None
     tagline: str | None
+    overview: str | None
     plot: str | None
 
 class CastMemberResponse(BaseModel):

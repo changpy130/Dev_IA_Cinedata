@@ -20,13 +20,13 @@ from db.importers.plot_importer import PlotImporter
 from infrastructure.load_db import DatabaseManager
 
 importers: list[Importer] = [
-    # MovieImporter(),
-    # MovieDetailsImporter(),
-    # InfoImporter(),
-    # CreditImporter(
-    #     cast_num=5, 
-    #     crew_jobs=['Director', 'Writer', 'Editor', 'Director of Photography', 'Original Music Composer']
-    # ),
+    MovieImporter(),
+    MovieDetailsImporter(),
+    InfoImporter(),
+    CreditImporter(
+        cast_num=5, 
+        crew_jobs=['Director', 'Writer', 'Editor', 'Director of Photography', 'Original Music Composer']
+    ),
     PlotImporter(timeout=5, max_concurrent=1)
 ]
 

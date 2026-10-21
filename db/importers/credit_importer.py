@@ -8,7 +8,7 @@ sys.path.append(str(ROOT))
 
 from src.TMDBExtractor import TMDBExtractor
 from infrastructure.load_db import DatabaseManager
-from domain.tmdb_movies import Credit, Cast, Crew
+from domain.tmdb_movies import Credit
 
 #region SQL
 LOAD_ID = """

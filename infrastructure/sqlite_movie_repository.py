@@ -7,7 +7,19 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from domain.db_entities import Movie, MovieDetails, CastMember, CrewMember, MovieGenre, Rating, CoLikeCount
 
+#region SQL
 
+# r: Python reads '\' as it is, not escape
+SEARCH_BY_TITLE = r"""
+    SELECT movielens_id, title, year
+    FROM movies
+    WHERE title LIKE :pattern ESCAPE '\'
+    ORDER BY (title LIKE :prefix ESCAPE '\') DESC, title
+    LIMIT :limit
+"""
+
+
+# Inherit MovieRepository protocol
 class SqliteMovieRepository:
     def __init__(self, conn: sqlite3.Connection):
         self._conn = conn
@@ -55,7 +67,7 @@ class SqliteMovieRepository:
         cursor = self._conn.execute(
             "SELECT m.movielens_id, m.title, m.year, "
             "d.release_date, d.budget, d.revenue, d.runtime, "
-            "d.vote_average, d.tagline, d.plot "
+            "d.vote_average, d.tagline, d.plot, d.overview "
             "FROM movies m "
             "JOIN movie_details d ON m.movielens_id = d.movielens_id "
             "WHERE m.movielens_id = ?",
@@ -72,6 +84,15 @@ class SqliteMovieRepository:
             data['release_date'] = date.fromisoformat(raw) if raw else None
         
         return MovieDetails(**data)
+
+    def search_by_title(self, query: str, limit: int) -> list[Movie]:
+        escaped = query.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        rows = self._conn.execute(
+            SEARCH_BY_TITLE,
+            {"pattern": f"%{escaped}%", "prefix": f"{escaped}%", "limit": limit},
+        ).fetchall()
+
+        return [ Movie(**row) for row in rows ]
 
 #region Cast, Crew and Genre
     def get_cast(self, movielens_id: int) -> list[CastMember]:
@@ -161,12 +182,9 @@ class SqliteMovieRepository:
 #region Testing
 if __name__ == "__main__":
     from infrastructure.load_db import DatabaseManager
-
+    from collections import Counter
     conn = DatabaseManager().load_db()
     conn.row_factory = sqlite3.Row
-    cursor = conn.execute(
-        "SELECT movielens_id, title, year FROM movies WHERE movielens_id = ?",
-        (1,)
-    )
-    row = cursor.fetchone()
-    print(Movie(**row) if row else None)
+    repo = SqliteMovieRepository(conn)
+
+    conn.close()

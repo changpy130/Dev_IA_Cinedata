@@ -7,7 +7,7 @@ ROOT = Path(__file__).parent.parent.parent
 sys.path.append(str(ROOT))
 
 from src.TMDBExtractor import TMDBExtractor
-from domain.tmdb_movies import MoviewDetails
+from domain.tmdb_movies import MovieDetails
 
 
 #region SQL
@@ -17,6 +17,20 @@ LOAD_ID = """
     LEFT JOIN movie_details d
         ON l.movielens_id = d.movielens_id
     WHERE d.movielens_id IS NULL
+"""
+
+LOAD_ID_FOR_OVERVIEW = """
+    SELECT l.movielens_id, l.tmdb_id
+    FROM links l
+    JOIN movie_details d
+        ON l.movielens_id = d.movielens_id
+    WHERE d.overview IS NULL
+"""
+
+UPDATE_OVERVIEW = """
+    UPDATE movie_details
+    SET overview = ?
+    WHERE movielens_id = ?
 """
 
 INSERT_MOVIE_DETAILS = """
@@ -42,7 +56,7 @@ class MovieDetailsImporter:
         self._insert(id_pairs, movies, conn)
 
 
-    def _get_details(self, ids: list[int]) -> list[MoviewDetails]:
+    def _get_details(self, ids: list[int]) -> list[MovieDetails]:
         if not self.extractor.check_auth():
             return []
         return asyncio.run(self.extractor.get_movie_details_list(ids))
@@ -54,7 +68,7 @@ class MovieDetailsImporter:
         return cursor.fetchall()
     
 
-    def _insert(self, id_pairs, movies: list[MoviewDetails], conn: sqlite3.Connection):
+    def _insert(self, id_pairs, movies: list[MovieDetails], conn: sqlite3.Connection):
         id_mapping = self._id_mapping(id_pairs)
         details = []
         genres = []
@@ -72,7 +86,8 @@ class MovieDetailsImporter:
                 movie.revenue, 
                 movie.runtime, 
                 movie.vote_average, 
-                movie.tagline
+                movie.tagline,
+                movie.overview
             )
             details.append(detail)
 
@@ -88,6 +103,20 @@ class MovieDetailsImporter:
             INSERT_MOVIE_GENRES,
             genres
         )
+        conn.commit()
+
+    # Used for adding the overview for the existing rows
+    def _update_overview(self, id_pairs, movies: list[MovieDetails], conn: sqlite3.Connection) -> None:
+        id_mapping = self._id_mapping(id_pairs)
+        rows = []
+
+        for movie in movies:
+            movielens_id = id_mapping.get(movie.id)
+            if movielens_id is None:
+                continue
+            rows.append((movie.overview or "", movielens_id))
+
+        conn.executemany(UPDATE_OVERVIEW, rows)
         conn.commit()
         
 

@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS movie_details (
     vote_average FLOAT,
     tagline TEXT,
     plot TEXT,
+    overview TEXT,
     FOREIGN KEY (movielens_id) REFERENCES movies(movielens_id)
 );
 
@@ -67,9 +68,19 @@ CREATE TABLE IF NOT EXISTS ratings (
     FOREIGN KEY (movielens_id) REFERENCES movies(movielens_id)
 );
 
+CREATE INDEX IF NOT EXISTS idx_ratings_movie ON ratings(movielens_id, rating);
+
 CREATE TABLE IF NOT EXISTS plot_attempts (
     movielens_id INTEGER PRIMARY KEY,
     status TEXT NOT NULL,   -- 'not_found'
     attempted_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (movielens_id) REFERENCES movies(movielens_id)
+);
+
+CREATE TABLE IF NOT EXISTS movie_embeddings (
+    movielens_id INTEGER,
+    model TEXT NOT NULL,
+    vector BLOB NOT NULL,
+    PRIMARY KEY (movielens_id, model),
     FOREIGN KEY (movielens_id) REFERENCES movies(movielens_id)
 );

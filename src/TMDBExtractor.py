@@ -11,7 +11,7 @@ from pathlib import Path
 project_root = Path(__file__).resolve().parent.parent
 sys.path.append(str(project_root))
 
-from domain.tmdb_movies import PopularMoviesResponse, MoviewDetails, Credit, Cast, Crew
+from domain.tmdb_movies import PopularMoviesResponse, MovieDetails, Credit, Cast, Crew
 
 
 class TMDBExtractor(BaseModel):
@@ -47,7 +47,7 @@ class TMDBExtractor(BaseModel):
         url = f"{self.base_url}/movie/{movie_id}"
         response = self._parse_response(url)
 
-        return MoviewDetails.model_validate(response)
+        return MovieDetails.model_validate(response)
     
 
     def get_movie_credits(self, movie_id, cast_num=5, crew_jobs=("Director",)):
@@ -76,7 +76,7 @@ class TMDBExtractor(BaseModel):
         url = f"{self.base_url}/movie/{movie_id}"
         response = await self._parse_response_async(client, url)
 
-        return MoviewDetails.model_validate(response) if response else None
+        return MovieDetails.model_validate(response) if response else None
 
 
     async def get_movie_details_list(self, movie_ids: list[int], max_concurrent: int = 20):
