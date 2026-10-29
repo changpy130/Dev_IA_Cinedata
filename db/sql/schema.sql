@@ -84,3 +84,20 @@ CREATE TABLE IF NOT EXISTS movie_embeddings (
     PRIMARY KEY (movielens_id, model),
     FOREIGN KEY (movielens_id) REFERENCES movies(movielens_id)
 );
+
+CREATE TABLE IF NOT EXISTS plot_chunks (
+    movielens_id INTEGER NOT NULL,
+    chunk_index INTEGER NOT NULL,
+    text TEXT NOT NULL,
+    PRIMARY KEY (movielens_id, chunk_index),
+    FOREIGN KEY (movielens_id) REFERENCES movies(movielens_id)
+);
+
+CREATE TABLE IF NOT EXISTS chunk_embeddings (
+    movielens_id INTEGER NOT NULL,
+    chunk_index INTEGER NOT NULL,
+    model TEXT NOT NULL,
+    vector BLOB NOT NULL,
+    PRIMARY KEY (movielens_id, chunk_index, model),
+    FOREIGN KEY (movielens_id, chunk_index) REFERENCES plot_chunks (movielens_id, chunk_index)
+);

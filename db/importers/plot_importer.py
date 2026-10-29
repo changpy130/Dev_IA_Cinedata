@@ -23,6 +23,16 @@ LOAD = """
       AND a.movielens_id IS NULL
 """
 
+LOAD_MISSING_PLOT = """
+    SELECT m.movielens_id, m.title 
+    FROM movies m 
+    JOIN plot_attempts p 
+        ON m.movielens_id = p.movielens_id
+    JOIN movie_details d 
+        ON m.movielens_id = d.movielens_id
+    WHERE d.plot IS NULL
+"""
+
 UPDATE = """
     UPDATE movie_details
     SET plot = ?

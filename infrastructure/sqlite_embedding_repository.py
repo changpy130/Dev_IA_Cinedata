@@ -6,6 +6,7 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from domain.embedding_index import EmbeddingIndex
+from domain.chunk_index import ChunkIndex
 
 #region SQL
 LOAD_VECTORS = """
@@ -13,6 +14,13 @@ LOAD_VECTORS = """
     FROM movie_embeddings
     WHERE model = ?
     ORDER BY movielens_id
+"""
+
+LOAD_CHUNK = """
+    SELECT e.movielens_id, e.chunk_index, e.vector
+    FROM chunk_embeddings e
+    WHERE e.model = ?
+    ORDER BY e.movielens_id, e.chunk_index
 """
 
 
@@ -31,6 +39,17 @@ class SqliteEmbeddingRepository:
             [np.frombuffer(blob, dtype=np.float32) for _, blob in rows]  # bytes-to-vector conversion
         )
         return EmbeddingIndex(ids, matrix)
+
+    def load_chunk_index(self, model_name: str) -> ChunkIndex:
+        rows = self._conn.execute(LOAD_CHUNK, (model_name,)).fetchall()
+        if not rows:
+            raise ValueError(f"No chunk embeddings stored for model '{model_name}'")
+
+        keys = [(movielens_id, chunk_index) for movielens_id, chunk_index, _ in rows]
+        matrix = np.vstack(
+            [np.frombuffer(r[2], dtype=np.float32) for r in rows]
+        )
+        return ChunkIndex(keys=keys, matrix=matrix)
 
 #region Test
 if __name__ == "__main__":

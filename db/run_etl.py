@@ -17,6 +17,7 @@ from db.importers.movie_details_importer import MovieDetailsImporter
 from db.importers.info_importer import InfoImporter
 from db.importers.credit_importer import CreditImporter
 from db.importers.plot_importer import PlotImporter
+from db.importers.chunk_importer import ChunkImporter
 from infrastructure.load_db import DatabaseManager
 
 importers: list[Importer] = [
@@ -27,7 +28,8 @@ importers: list[Importer] = [
         cast_num=5, 
         crew_jobs=['Director', 'Writer', 'Editor', 'Director of Photography', 'Original Music Composer']
     ),
-    PlotImporter(timeout=5, max_concurrent=1)
+    PlotImporter(timeout=5, max_concurrent=1),
+    ChunkImporter(batch_size=500),
 ]
 
 movie_db_manager = DatabaseManager()

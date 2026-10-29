@@ -8,7 +8,6 @@ sys.path.append(str(ROOT))
 
 from domain.embedder import Embedder
 from domain.embedding_text import build_embedding_text
-from infrastructure.sentence_transformer_embedder import SentenceTransformerEmbedder
 
 #region SQL
 LOAD_MOVIES = """
@@ -48,7 +47,6 @@ class EmbeddingImporter:
         for start in range(0, len(items), self._batch_size):
             batch = items[start:start + self._batch_size]
             self._embed_and_insert(batch, conn)
-            print(f"{min(start + self._batch_size, len(items))}/{len(items)}")
 
 
 #region DB handling
@@ -90,6 +88,7 @@ class EmbeddingImporter:
 #region Test
 if __name__ == "__main__":
     from infrastructure.load_db import DatabaseManager
+    from infrastructure.sentence_transformer_embedder import SentenceTransformerEmbedder
 
     manager = DatabaseManager()
     conn = manager.load_db()

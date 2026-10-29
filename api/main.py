@@ -29,7 +29,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title='Cinedata Project: Movie Info',
-    description='APIs of simple movie details such as genres, cast and ratings.',
+    description='APIs of movie details such as genres, cast and ratings.',
     version='1.0.0',
     lifespan=lifespan
 )

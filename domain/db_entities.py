@@ -61,7 +61,15 @@ class SimilarMovieDetails:
     details: MovieDetails
     score: float
 
-    
+@dataclass(frozen=True)
+class PlotPassage:
+    movielens_id: int
+    chunk_index: int
+    title: str
+    year: int | None
+    text: str
+
+#region Genre Enum
 class Genre(str, Enum):
     ACTION = "Action"
     ADVENTURE = "Adventure"

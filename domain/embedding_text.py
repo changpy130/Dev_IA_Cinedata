@@ -11,7 +11,7 @@ def build_embedding_text(
     if not overview_clean and not tagline_clean:
         return None
 
-    heading = f"{title} ({year})." if year else f"{title}."
+    heading = f"{title} ({year})." if year is not None else f"{title}."
     parts = [
         heading, 
         f"{genres}." if genres else "", 
@@ -19,3 +19,11 @@ def build_embedding_text(
         tagline_clean
     ]
     return " ".join(part for part in parts if part)
+
+def build_chunk_embedding_text(
+    title: str, 
+    year: int | None, 
+    chunk_text: str
+) -> str:
+    heading = f"{title} ({year})." if year is not None else f"{title}."
+    return f"{heading} {chunk_text}"
